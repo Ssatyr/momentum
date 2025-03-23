@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Library API Test Page</title>
+</head>
+<body>
+    <h1>Library API Test Page</h1>
+
+    <!-- Sekcja: Dodawanie nowej książki -->
+    <section>
+      <h2>Dodaj nową książkę</h2>
+      <form id="createBookForm">
+        <div>
+          <label for="createSerial">Numer seryjny (6 cyfr):</label>
+          <input type="text" id="createSerial" name="serial" required>
+        </div>
+        <div>
+          <label for="createTitle">Tytuł:</label>
+          <input type="text" id="createTitle" name="title" required>
+        </div>
+        <div>
+          <label for="createAuthor">Autor:</label>
+          <input type="text" id="createAuthor" name="author" required>
+        </div>
+        <button type="submit">Dodaj książkę</button>
+      </form>
+    </section>
+
+    <!-- Sekcja: Usuwanie książki -->
+    <section>
+      <h2>Usuń książkę</h2>
+      <form id="deleteBookForm">
+        <div>
+          <label for="deleteSerial">Numer seryjny (6 cyfr):</label>
+          <input type="text" id="deleteSerial" name="serial" required>
+        </div>
+        <button type="submit">Usuń książkę</button>
+      </form>
+    </section>
+
+    <!-- Sekcja: Wypożyczanie książki -->
+    <section>
+      <h2>Wypożycz książkę</h2>
+      <form id="borrowBookForm">
+        <div>
+          <label for="borrowSerial">Numer seryjny (6 cyfr):</label>
+          <input type="text" id="borrowSerial" name="serial" required>
+        </div>
+        <div>
+          <label for="borrowCard">Numer karty bibliotecznej (6 cyfr):</label>
+          <input type="text" id="borrowCard" name="card" required>
+        </div>
+        <button type="submit">Wypożycz książkę</button>
+      </form>
+    </section>
+
+    <!-- Sekcja: Zwracanie książki -->
+    <section>
+      <h2>Zwróć książkę</h2>
+      <form id="returnBookForm">
+        <div>
+          <label for="returnSerial">Numer seryjny (6 cyfr):</label>
+          <input type="text" id="returnSerial" name="serial" required>
+        </div>
+        <button type="submit">Zwróć książkę</button>
+      </form>
+    </section>
+
+    <!-- Sekcja: Pobieranie listy książek -->
+    <section>
+      <h2>Pobierz listę wszystkich książek</h2>
+      <button id="getBooksBtn">Pobierz książki</button>
+      <div id="booksList"></div>
+    </section>
+
+    <hr>
+    <!-- Sekcja: Wyświetlanie surowej odpowiedzi API -->
+    <div>
+      <h2>Odpowiedź API:</h2>
+      <pre id="responseOutput"></pre>
+    </div>
+
+    <script>
+      // W razie potrzeby zmień host/port na odpowiedni
+      const baseUrl = 'http://localhost:8000';
+
+      // -----------------------------------------------------------------------
+      // Dodawanie nowej książki
+      // -----------------------------------------------------------------------
+      const createBookForm = document.getElementById('createBookForm');
+      createBookForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const serial = document.getElementById('createSerial').value.trim();
+        const title  = document.getElementById('createTitle').value.trim();
+        const author = document.getElementById('createAuthor').value.trim();
+
+        try {
+          const response = await fetch(`${baseUrl}/books`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              serial_number: serial, 
+              title: title, 
+              author: author 
+            })
+          });
+          const data = await response.json();
+          document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      // -----------------------------------------------------------------------
+      // Usuwanie książki
+      // -----------------------------------------------------------------------
+      const deleteBookForm = document.getElementById('deleteBookForm');
+      deleteBookForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const serial = document.getElementById('deleteSerial').value.trim();
+
+        try {
+          const response = await fetch(`${baseUrl}/books/${serial}`, {
+            method: 'DELETE'
+          });
+          const data = await response.json();
+          document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      // -----------------------------------------------------------------------
+      // Wypożyczanie książki
+      // -----------------------------------------------------------------------
+      const borrowBookForm = document.getElementById('borrowBookForm');
+      borrowBookForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const serial = document.getElementById('borrowSerial').value.trim();
+        const card   = document.getElementById('borrowCard').value.trim();
+
+        try {
+          const response = await fetch(`${baseUrl}/books/${serial}/borrow`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ library_card_number: card })
+          });
+          const data = await response.json();
+          document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      // -----------------------------------------------------------------------
+      // Zwracanie książki
+      // -----------------------------------------------------------------------
+      const returnBookForm = document.getElementById('returnBookForm');
+      returnBookForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const serial = document.getElementById('returnSerial').value.trim();
+
+        try {
+          const response = await fetch(`${baseUrl}/books/${serial}/return`, {
+            method: 'PUT'
+          });
+          const data = await response.json();
+          document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      // -----------------------------------------------------------------------
+      // Pobieranie listy książek
+      // -----------------------------------------------------------------------
+      const getBooksBtn = document.getElementById('getBooksBtn');
+      getBooksBtn.addEventListener('click', async () => {
+        try {
+          const response = await fetch(`${baseUrl}/books`);
+          const data = await response.json();
+          
+          // Wyświetlenie surowej odpowiedzi w #responseOutput
+          document.getElementById('responseOutput').textContent = JSON.stringify(data, null, 2);
+          
+          // Proste wypisanie listy książek w #booksList
+          const booksList = document.getElementById('booksList');
+          booksList.innerHTML = '';
+          data.forEach(book => {
+            const item = document.createElement('div');
+            item.textContent = `Numer seryjny: ${book.serial_number} | Tytuł: ${book.title} | Autor: ${book.author} | Wypożyczona: ${book.is_borrowed}`;
+            booksList.appendChild(item);
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    </script>
+
+</body>
+</html>
